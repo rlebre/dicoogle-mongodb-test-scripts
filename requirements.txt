@@ -1,0 +1,14 @@
+cycler==0.10.0
+dicomgenerator==0.3.7
+factory-boy==2.12.0
+Faker==4.9.0
+kiwisolver==1.2.0
+matplotlib==3.1.2
+numpy==1.18.0
+Pillow==6.2.2
+pydicom==2.0.0
+pymongo==3.11.0
+pyparsing==2.4.7
+python-dateutil==2.8.1
+six==1.15.0
+text-unidecode==1.3
