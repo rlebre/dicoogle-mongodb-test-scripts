@@ -70,7 +70,7 @@ def main(argv):
 
     for opt, arg in opts:
         if opt == '-h':
-            print('test.py -g <number of DICOM files to generate> -o <output_directory>')
+            print('insert.py -g <number of DICOM files to generate> -o <output_directory>')
             sys.exit()
         elif opt in ("-g", "--generate"):
             try:
