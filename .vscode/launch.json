@@ -9,7 +9,8 @@
       "type": "python",
       "request": "launch",
       "program": "insertion.py",
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "args": ["-o", "dataset", "-g", "6"]
     }
   ]
 }
