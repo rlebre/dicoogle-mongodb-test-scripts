@@ -38,6 +38,8 @@ This project is composed by two scripts:
 
 5. Edit your configuration
 
+### Insert
+
 6. Run `insert.py`
 
    ```shell script
@@ -53,6 +55,20 @@ This project is composed by two scripts:
    ```
 
    Usage: `generate.py -g <number of DICOM files to generate> -o <output_directory>`
+
+### Query
+
+8. Or run `querying.py`
+
+   ```shell script
+   python querying.py [-i] [-d] [-q <query>] #generates 1000 DICOM files in directory ./dataset
+   ```
+
+   ```
+   -i - create indexes
+   -d - drop indexes
+   -q - query
+   ```
 
 ### Configuration
 
