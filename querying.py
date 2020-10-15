@@ -98,5 +98,7 @@ def main(argv):
     print("Average per query %.2fms." % results['average'])
     print("Result count: %d.\n" % results['results'])
 
+    mongo.close()
+
 if __name__ == "__main__":
    main(sys.argv[1:])

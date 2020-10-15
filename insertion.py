@@ -44,10 +44,8 @@ def dicom2json(dataset_files):
 
     return dicom_files
 
-def insert_objects(dicom_json_objects):
-    mongo = MongoClient(MONGO_HOST, MONGO_PORT, username=MONGO_USER, password=MONGO_PASSWORD)
-    #mongo = MongoClient('localhost', 27017)
-    db = mongo.DicoogleDatabase
+def insert_objects(mongo_connection, dicom_json_objects):
+    db = mongo_connection.DicoogleDatabase
     collection = db.DicoogleObjs
 
     deltaT = time.time_ns()
@@ -61,6 +59,8 @@ def insert_objects(dicom_json_objects):
 def main(argv):
     output_dir = 'dataset'
     number_of_files = 0
+    mongo = MongoClient(MONGO_HOST, MONGO_PORT, username=MONGO_USER, password=MONGO_PASSWORD)
+    #mongo = MongoClient('localhost', 27017)
 
     try:
         opts, args = getopt.getopt(argv,"hg:o:",["ifile=","output="])
@@ -85,9 +85,11 @@ def main(argv):
     
     dataset_file_list = get_dicom_files_list(output_dir)
     dicom_json_objects = dicom2json(dataset_file_list)
-    result = insert_objects(dicom_json_objects)
+    result = insert_objects(mongo, dicom_json_objects)
 
     print("Inserted %d objects in %.2f milisseconds.\n" % (result['count'], result['elapsed']))
+
+    mongo_connection.close()
 
 if __name__ == "__main__":
    main(sys.argv[1:])
