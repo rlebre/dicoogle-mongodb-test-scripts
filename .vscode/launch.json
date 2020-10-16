@@ -10,7 +10,7 @@
       "request": "launch",
       "program": "insertion.py",
       "console": "integratedTerminal",
-      "args": ["-o", "dataset", "-g", "6"]
+      "args": ["-o", "dataset", "-g", "7", "-c", "2"]
     },
     {
       "name": "Debug Query",
