@@ -24,29 +24,29 @@ def rer(ds_json):
 def get_dicom_files_list(output_dir):
     return [join(output_dir,f) for f in listdir(output_dir) if isfile(join(output_dir, f))]
 
-def dicom2json(dataset_files):
-    dicom_files = []
-    for filename in dataset_files:
-        ds = pydicom.dcmread(filename)
-        del ds.PixelData
-        
-        ds_json = ds.to_json_dict()
-        new_ds_json = {}
+def dicom2json(filename):
+    ds = pydicom.dcmread(filename)
+    del ds.PixelData
+    
+    ds_json = ds.to_json_dict()
+    new_ds_json = {}
 
-        for key in ds_json.keys():
-            try:
-                if ds_json[key].get("Value") is not None:
-                    new_ds_json[dcm_dict[int(key, 16)][4]] = (ds_json[key]["Value"][0] if len(ds_json[key]["Value"]) == 1 else ds_json[key]["Value"])
-            except:
-                pass
+    for key in ds_json.keys():
+        try:
+            if ds_json[key].get("Value") is not None:
+                new_ds_json[dcm_dict[int(key, 16)][4]] = (ds_json[key]["Value"][0] if len(ds_json[key]["Value"]) == 1 else ds_json[key]["Value"])
+        except:
+            pass
 
-        dicom_files.append(new_ds_json)
+    return new_ds_json
 
-    return dicom_files
-
-def insert_objects(mongo_connection, dicom_json_objects):
+def insert_objects(mongo_connection, dicom_paths):
     db = mongo_connection.DicoogleDatabase
     collection = db.DicoogleObjs
+
+    dicom_json_objects = []
+    for dicom in dicom_paths:
+        dicom_json_objects.append(dicom2json(dicom))
 
     deltaT = time.time_ns()
     result = collection.insert_many(dicom_json_objects)
@@ -78,8 +78,8 @@ def insert_objects_by_chuncks(mongo_connection, dicom_json_objects, chunk_size=5
 def main(argv):
     output_dir = 'dataset'
     number_of_files = 0
-    #mongo_connection = MongoClient(MONGO_HOST, MONGO_PORT, username=MONGO_USER, password=MONGO_PASSWORD)
-    mongo_connection = MongoClient('localhost', 27017)
+    mongo_connection = MongoClient(MONGO_HOST, MONGO_PORT, username=MONGO_USER, password=MONGO_PASSWORD)
+    #mongo_connection = MongoClient('localhost', 27017)
     chunk_size = 0
 
     try:
@@ -109,12 +109,12 @@ def main(argv):
         generate_dicom_files(output_dir, number_of_files)
     
     dataset_file_list = get_dicom_files_list(output_dir)
-    dicom_json_objects = dicom2json(dataset_file_list)
+    #dicom_json_objects = dicom2json(dataset_file_list)
 
     if chunk_size == 0:
-        result = insert_objects(mongo_connection, dicom_json_objects)
+        result = insert_objects(mongo_connection, dataset_file_list)
     elif chunk_size > 0:
-        result = insert_objects_by_chuncks(mongo_connection, dicom_json_objects, chunk_size)
+        result = insert_objects_by_chuncks(mongo_connection, dataset_file_list, chunk_size)
 
 
     print("Inserted %d objects in %.2f milisseconds.\n" % (result['count'], result['elapsed']))
