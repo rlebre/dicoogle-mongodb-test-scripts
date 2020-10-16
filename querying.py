@@ -66,7 +66,7 @@ def query(mongo_connection, q, times=1):
         total_delta += deltaT
         last_result = result
 
-    return { 'elapsed': deltaT/1e6, 'repeated': times, 'average': deltaT/1e6/times, 'results': last_result }
+    return { 'elapsed': total_delta/1e6, 'repeated': times, 'average': total_delta/1e6/times, 'results': last_result }
 
 
 def main(argv):
