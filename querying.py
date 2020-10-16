@@ -73,9 +73,10 @@ def main(argv):
     mongo = MongoClient(MONGO_HOST, MONGO_PORT, username=MONGO_USER, password=MONGO_PASSWORD)
     #mongo = MongoClient('localhost', 27017)
     q = {}
+    repeat_times = 10
 
     try:
-        opts, args = getopt.getopt(argv,"hidq:",["query="])
+        opts, args = getopt.getopt(argv,"hidq:t:",["query="])
     except getopt.GetoptError:
         print('insert.py [-i] -q <query>')
         sys.exit(2)
@@ -90,8 +91,13 @@ def main(argv):
             drop_indexes_dim(mongo)
         elif opt in ("-q", "--query"):
             q = json.loads(arg)
-        
-    results = query(mongo, q, 10)
+        elif opt in ("-t", "--times"):
+            try:
+                repeat_times = int(arg)
+            except ValueError:
+                sys.exit("-t | --times argument must be integer. Program will not run.")
+
+    results = query(mongo, q, repeat_times)
     
     print("Elapsed %.2fms." % results['elapsed'])
     print("Repeated %d times." % results['repeated'])
