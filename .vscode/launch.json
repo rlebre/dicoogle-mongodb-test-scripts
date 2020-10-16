@@ -20,8 +20,18 @@
       "console": "integratedTerminal",
       "args": [
         "-q",
-        "{\"SOPInstanceUID\":\"1.2.826.0.1.3680043.10.404.6533350739534495235002857390022906405\"}"
+        "{\"SOPInstanceUID\":\"1.2.826.0.1.3680043.10.404.6533350739534495235002857390022906405\"}",
+        "-t",
+        "1000"
       ]
+    },
+    {
+      "name": "Debug Generator",
+      "type": "python",
+      "request": "launch",
+      "program": "generator.py",
+      "console": "integratedTerminal",
+      "args": ["-g", "10"]
     }
   ]
 }
