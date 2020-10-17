@@ -1,18 +1,20 @@
 #!/usr/bin/python
 
-import sys, getopt
-
-import pydicom
-from pydicom._dicom_dict import DicomDictionary as dcm_dict
-
-import time
-from pymongo import MongoClient
-from generator import generate_dicom_files, generate_dicom_to_json
-from local_settings import *
+import getopt
 import json
-
+import sys
+import time
 from os import listdir
 from os.path import isfile, join
+
+import pydicom
+from dicomgenerator.factory import CTDatasetFactory
+from pydicom._dicom_dict import DicomDictionary as dcm_dict
+from pymongo import MongoClient
+
+from generator import generate_dicom_files, generate_dicom_to_json
+from local_settings import *
+
 
 def rer(ds_json):
     new_ds_json = {}
@@ -41,7 +43,17 @@ def dicom2json(filename):
 
     return new_ds_json
 
-def insert_objects(mongo_connection, dicom_paths):
+def insert_objects(mongo_connection, dicom_json_objects):
+    db = mongo_connection.DicoogleDatabase
+    collection = db.DicoogleObjs
+
+    deltaT = time.time_ns()
+    result = collection.insert_many(dicom_json_objects)
+    deltaT = time.time_ns() - deltaT
+
+    return { 'elapsed': deltaT/1e6, 'count':len(result.inserted_ids) }
+
+def insert_dicom_objects(mongo_connection, dicom_paths):
     db = mongo_connection.DicoogleDatabase
     collection = db.DicoogleObjs
 
@@ -54,7 +66,7 @@ def insert_objects(mongo_connection, dicom_paths):
     deltaT = time.time_ns() - deltaT
 
     return { 'elapsed': deltaT/1e6, 'count':len(result.inserted_ids) }
-
+ 
 def insert_json_objects(mongo_connection, dicom_paths):
     db = mongo_connection.DicoogleDatabase
     collection = db.DicoogleObjs
@@ -78,6 +90,45 @@ def insert_objects_by_chuncks(mongo_connection, dicom_json_objects, chunk_size=5
     for idx, dicom_json_obj in enumerate(dicom_json_objects):
         dicom_objects_chunk.append(dicom_json_obj)
 
+        if len(dicom_objects_chunk) % chunk_size == 0:
+            statistics = insert_dicom_objects(mongo_connection, dicom_objects_chunk)
+            results['elapsed'] += statistics['elapsed']
+            results['count'] += statistics['count']
+            dicom_objects_chunk = []
+        
+    if len(dicom_objects_chunk) < chunk_size and len(dicom_objects_chunk) > 0:
+        statistics = insert_dicom_objects(mongo_connection, dicom_objects_chunk)
+        results['elapsed'] += statistics['elapsed']
+        results['count'] += statistics['count']
+
+    return results
+
+def insert_generated_by_chuncks(mongo_connection, number_of_objects, chunk_size=5000):
+    dicom_objects_chunk = []
+    results = { 'elapsed': 0.0, 'count': 0 }
+
+    for idx in range(number_of_objects):
+        dataset = CTDatasetFactory()
+        del dataset.PixelData
+        ds_json = dataset.to_json_dict()
+        
+        new_ds_json = {}
+
+        for key in ds_json.keys():
+            try:
+                if ds_json[key].get("Value") is not None:
+                    a = dcm_dict[int(key, 16)][4]
+                    b= ds_json[key]["Value"][0]
+                    c= len(ds_json[key]["Value"])
+                    d= ds_json[key]["Value"]
+                    new_ds_json[dcm_dict[int(key, 16)][4]] = (ds_json[key]["Value"][0] if len(ds_json[key]["Value"]) == 1 else ds_json[key]["Value"])
+            except:
+                pass
+
+        dicom_objects_chunk.append(new_ds_json)
+
+        print('{:2.2%} - {}/{}'.format((idx / number_of_objects), idx, number_of_objects), sep=" ", end="\r", flush=True)
+       
         if len(dicom_objects_chunk) % chunk_size == 0:
             statistics = insert_objects(mongo_connection, dicom_objects_chunk)
             results['elapsed'] += statistics['elapsed']
@@ -120,9 +171,10 @@ def main(argv):
     mongo_connection = MongoClient(MONGO_HOST, MONGO_PORT, username=MONGO_USER, password=MONGO_PASSWORD)
     #mongo_connection = MongoClient('localhost', 27017)
     chunk_size = 0
+    direct_flag = False
 
     try:
-        opts, args = getopt.getopt(argv,"hg:o:c:j",["ifile=","output="])
+        opts, args = getopt.getopt(argv,"hg:o:c:jd:",["ifile=","output="])
     except getopt.GetoptError:
         print('insert.py -i <number of DICOM files to generate> -o <output_directory>')
         sys.exit(2)
@@ -148,6 +200,17 @@ def main(argv):
                 chunk_size = int(arg)
             except ValueError:
                 sys.exit("-c | --chunk argument must be integer. Program will not run.")
+        elif opt in ("-d", "--direct"):
+            try:
+                number_of_files = int(arg)
+                direct_flag = True
+            except ValueError:
+                sys.exit("-c | --chunk argument must be integer. Program will not run.")
+
+    if direct_flag:
+        result = insert_generated_by_chuncks(mongo_connection, number_of_files, chunk_size)
+        print("Inserted %d objects in %.2f milisseconds.\n" % (result['count'], result['elapsed']))
+        sys.exit()
 
     if number_of_files > 0 and generate_in_dicom == True:
         generate_dicom_files(output_dir, number_of_files)
@@ -158,7 +221,7 @@ def main(argv):
     #dicom_json_objects = dicom2json(dataset_file_list)
 
     if chunk_size == 0 and generate_in_dicom == True:
-        result = insert_objects(mongo_connection, dataset_file_list)
+        result = insert_dicom_objects(mongo_connection, dataset_file_list)
     elif chunk_size > 0 and generate_in_dicom == True:
         result = insert_objects_by_chuncks(mongo_connection, dataset_file_list, chunk_size)
     elif chunk_size == 0 and generate_in_dicom == False:
