@@ -9,6 +9,7 @@ import time
 from pymongo import MongoClient
 from generator import generate_dicom_files, generate_dicom_to_json
 from local_settings import *
+import json
 
 from os import listdir
 from os.path import isfile, join
@@ -58,8 +59,11 @@ def insert_json_objects(mongo_connection, dicom_paths):
     db = mongo_connection.DicoogleDatabase
     collection = db.DicoogleObjs
 
-    for dicom in dicom_paths:
-        dicom_json_objects.append(dicom)
+    dicom_json_objects = []  
+    for dicom_path in dicom_paths:
+        with open(dicom_path) as f:
+            dicom_json = json.load(f)
+            dicom_json_objects.append(dicom_json)
 
     deltaT = time.time_ns()
     result = collection.insert_many(dicom_json_objects)
@@ -94,6 +98,8 @@ def insert_json_objects_by_chuncks(mongo_connection, dicom_json_objects, chunk_s
     for idx, dicom_json_obj in enumerate(dicom_json_objects):
         dicom_objects_chunk.append(dicom_json_obj)
 
+        print('{:2.2%} - {}/{}'.format((idx / len(dicom_json_objects)), idx, len(dicom_json_objects)), sep=" ", end="\r", flush=True)
+       
         if len(dicom_objects_chunk) % chunk_size == 0:
             statistics = insert_json_objects(mongo_connection, dicom_objects_chunk)
             results['elapsed'] += statistics['elapsed']
@@ -116,7 +122,7 @@ def main(argv):
     chunk_size = 0
 
     try:
-        opts, args = getopt.getopt(argv,"hg:o:c:",["ifile=","output="])
+        opts, args = getopt.getopt(argv,"hg:o:c:j",["ifile=","output="])
     except getopt.GetoptError:
         print('insert.py -i <number of DICOM files to generate> -o <output_directory>')
         sys.exit(2)
