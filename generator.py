@@ -139,8 +139,8 @@ def main(argv):
     :param argv: List of arguments
     :type argv: list
     """
-    
-    usage = 'generator.py -n <number_to_generate> -o <output_directory> -d|-d <dicom_format | json_format'
+
+    usage = 'generator.py -n <number_to_generate> -o <output_directory> -d|-d <dicom_format | json_format>'
     output_dir = ''
     output_path = Path(output_dir)
     number_of_files = 0

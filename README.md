@@ -2,7 +2,7 @@
 
 This project is composed by two scripts:
 
-- generator.py: generates CT files in DICOM format
+- generator.py: generates DICOM objects or files (Computed Tomographies)
 - insert.py: generates CT files in DICOM format and inserts them in a MongoDB endpoint
 
 ## Requirements
@@ -51,10 +51,10 @@ This project is composed by two scripts:
 7. Or run `generate.py`
 
    ```shell script
-   python generate.py -g 1000 -o dataset #generates 1000 DICOM files in directory ./dataset
+   python generator.py -n 10 -o ./dataset -j #generates 10 files in the directory './dataset' 
    ```
 
-   Usage: `generate.py -g <number of DICOM files to generate> -o <output_directory>`
+   Usage: `generator.py -n <number_to_generate> -o <output_directory> -d|-d <dicom_format | json_format`>
 
 ### Query
 
