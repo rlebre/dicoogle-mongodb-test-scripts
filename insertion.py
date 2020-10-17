@@ -151,13 +151,13 @@ def main(argv):
     dataset_file_list = get_dicom_files_list(output_dir)
     #dicom_json_objects = dicom2json(dataset_file_list)
 
-    if chunk_size == 0 and generate_in_dicom = True:
+    if chunk_size == 0 and generate_in_dicom == True:
         result = insert_objects(mongo_connection, dataset_file_list)
-    elif chunk_size > 0 and generate_in_dicom = True:
+    elif chunk_size > 0 and generate_in_dicom == True:
         result = insert_objects_by_chuncks(mongo_connection, dataset_file_list, chunk_size)
-    elif chunk_size == 0 and generate_in_dicom = False:
+    elif chunk_size == 0 and generate_in_dicom == False:
         result = insert_json_objects(mongo_connection, dataset_file_list)
-    elif chunk_size > 0 and generate_in_dicom = False:
+    elif chunk_size > 0 and generate_in_dicom == False:
         result = insert_json_objects_by_chuncks(mongo_connection, dataset_file_list, chunk_size)
 
 
