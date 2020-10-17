@@ -143,9 +143,9 @@ def main(argv):
             except ValueError:
                 sys.exit("-c | --chunk argument must be integer. Program will not run.")
 
-    if number_of_files > 0 and generate_in_dicom = True:
+    if number_of_files > 0 and generate_in_dicom == True:
         generate_dicom_files(output_dir, number_of_files)
-    elif number_of_files > 0 and generate_in_dicom = False:
+    elif number_of_files > 0 and generate_in_dicom == False:
         generate_dicom_to_json(output_dir, number_of_files)
     
     dataset_file_list = get_dicom_files_list(output_dir)
