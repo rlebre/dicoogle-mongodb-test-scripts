@@ -147,7 +147,7 @@ def insertion_json(mongo_connection, path_list, chunk_size=500):
 
 
 def main(argv):
-    usage = 'insert.py -n <number_of_objects_to_insert -c <chunk_size> -j/-d <dicom|json_directory>'
+    usage = 'insertion.py -n <number_of_objects_to_insert -c <chunk_size> -j/-d <dicom|json_directory>'
     input_dir = ''
     number_of_files = 0
     read_in_dicom = True

@@ -40,21 +40,24 @@ This project is composed by two scripts:
 
 ### Insert
 
-6. Run `insert.py`
+6. Run `generator.py` and `insertion.py
 
    ```shell script
-   python insert.py -g 1000 -o dataset #generates 1000 DICOM files in directory ./dataset
-   ```
-
-   Usage: `insert.py -g <number of DICOM files to generate> -o <output_directory>`
-
-7. Or run `generate.py`
-
-   ```shell script
-   python generator.py -n 10 -o ./dataset -j #generates 10 files in the directory './dataset' 
+   python generator.py -n 1000 -o ./dataset -j #generates 1000 files in the directory './dataset' 
+   python insertion.py -c 50 -j ./dataset # reads database directory and inserts each 50 in database
    ```
 
    Usage: `generator.py -n <number_to_generate> -o <output_directory> -d|-d <dicom_format | json_format`>
+
+
+6. Run simply generate objects in runtime `insertion.py`
+
+   ```shell script
+   python insertion.py -n 1000 -c 50 # generates 1000 objects and inserts each 50 in database
+   ```
+
+   Usage: `insertion.py -n <number_of_objects_to_insert -c <chunk_size> -j/-d <dicom|json_directory>`
+
 
 ### Query
 
