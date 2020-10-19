@@ -1,4 +1,13 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+__author__ = "Rui Lebre"
+__credits__ = ["PyDicom", "DicomGenerator", "PyMongo"]
+__license__ = "GPL"
+__version__ = "0.1.0"
+__maintainer__ = "Rui Lebre"
+__email__ = "ruilebre@ua.pt"
+__status__ = "Production"
 
 import getopt
 import json
@@ -9,6 +18,10 @@ from pathlib import Path
 from dicomgenerator.exporter import export
 from dicomgenerator.factory import CTDatasetFactory
 from pydicom._dicom_dict import DicomDictionary
+
+"""
+Generator of DICOM objects in DICOM or JSON formats
+"""
 
 
 def generate_dicom_objects(number_of_objects):
