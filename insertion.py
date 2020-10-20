@@ -17,6 +17,7 @@ import time
 from os import listdir
 from os.path import isfile, join
 
+import pydicom
 from dicomgenerator.factory import CTDatasetFactory
 from pydicom.datadict import keyword_for_tag
 from pymongo import MongoClient
@@ -50,6 +51,26 @@ def read_json_files(dicom_paths):
     return dicom_json_objects
 
 
+def read_dicom_files(dicom_paths):
+    dicom_json_objects = []
+    for dicom_path in dicom_paths:
+        ds = pydicom.dcmread(dicom_path)
+        del ds.PixelData
+
+        json_obj = ds.to_json_dict()
+        new_obj = {}
+
+        for key in json_obj.keys():
+            try:
+                if json_obj[key].get("Value") is not None:
+                    new_obj[keyword_for_tag(key)] = (
+                        json_obj[key]["Value"][0] if len(json_obj[key]["Value"]) == 1 else json_obj[key]["Value"])
+            except:
+                pass
+        
+        dicom_json_objects.append(new_obj)
+    return dicom_json_objects
+
 def print_progress(current, total):
     print('{:2.2%} - {}/{}'.format((current / total), current, total), sep=" ", end="\r", flush=True)
 
@@ -65,8 +86,14 @@ def insert_list(mongo_connection, dicom_json_objects):
     return {'elapsed': elapsed / 1e6, 'count': len(result.inserted_ids)}
 
 
-def insert_path(mongo_connection, dicom_paths):
-    dicom_json_objects = read_json_files(dicom_paths)
+def insert_path_dicom(mongo_connection, dicom_paths):
+    dicom_json_objects = read_dicom_files(dicom_paths)
+
+    return insert_list(mongo_connection, dicom_json_objects)
+
+
+def insert_path_json(mongo_connection, json_paths):
+    dicom_json_objects = read_json_files(json_paths)
 
     return insert_list(mongo_connection, dicom_json_objects)
 
@@ -114,12 +141,12 @@ def insertion_dicom(mongo_connection, path_list, chunk_size=500):
         dicom_objects_chunk.append(dicom_json_obj)
 
         if len(dicom_objects_chunk) % chunk_size == 0:
-            statistics = insert_path(mongo_connection, dicom_objects_chunk)
+            statistics = insert_path_dicom(mongo_connection, dicom_objects_chunk)
             results = merge_sum_dicts(results, statistics)
             dicom_objects_chunk = []
 
     if chunk_size > len(dicom_objects_chunk) > 0:
-        statistics = insert_path(mongo_connection, dicom_objects_chunk)
+        statistics = insert_path_json(mongo_connection, dicom_objects_chunk)
         results = merge_sum_dicts(results, statistics)
 
     return results
@@ -132,10 +159,10 @@ def insertion_json(mongo_connection, path_list, chunk_size=500):
     for idx, dicom_json_obj in enumerate(path_list):
         print_progress(idx, len(path_list))
 
-        dicom_objects_chunk.append(read_json_files(dicom_json_obj))
+        dicom_objects_chunk.append(dicom_json_obj)
 
         if len(dicom_objects_chunk) % chunk_size == 0:
-            statistics = insert_list(mongo_connection, dicom_objects_chunk)
+            statistics = insert_list(mongo_connection, read_json_files(dicom_objects_chunk))
             results = merge_sum_dicts(results, statistics)
             dicom_objects_chunk = []
 
@@ -152,7 +179,7 @@ def main(argv):
     number_of_files = 0
     read_in_dicom = True
     mongo_connection = MongoClient(MONGO_HOST, MONGO_PORT, username=MONGO_USER, password=MONGO_PASSWORD)
-    #mongo_connection = MongoClient('localhost', 27017)
+    mongo_connection = MongoClient('localhost', 27017)
     chunk_size = 1
 
     try:
@@ -182,7 +209,7 @@ def main(argv):
             read_in_dicom = True
             input_dir = arg
 
-    if number_of_files <= 0 or chunk_size < 1:
+    if number_of_files < 0 or chunk_size < 1:
         sys.exit("You must define a positive number of files/objects/chunk_size. Program will not run.")
 
     if input_dir == "":
