@@ -179,7 +179,7 @@ def main(argv):
     number_of_files = 0
     read_in_dicom = True
     mongo_connection = MongoClient(MONGO_HOST, MONGO_PORT, username=MONGO_USER, password=MONGO_PASSWORD)
-    mongo_connection = MongoClient('localhost', 27017)
+    #mongo_connection = MongoClient('localhost', 27017)
     chunk_size = 1
 
     try:
